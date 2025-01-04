@@ -11,6 +11,7 @@ function MyWeatherComponent() {
     error: false,
   });
   const [favorites, setFavorites] = useState([]);
+  const [recentSearches, setRecentSearches] = useState([]);
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp * 1000);
@@ -35,8 +36,9 @@ function MyWeatherComponent() {
           appid: api_key,
         },
       });
-      console.log("Weather Data Response =>", response);
+
       setWeather({ data: response.data, loading: false, error: false });
+      updateRecentSearches(input); // Update recent searches
     } catch (error) {
       setWeather({ ...weather, data: {}, error: true });
       setInput("");
@@ -44,20 +46,28 @@ function MyWeatherComponent() {
     }
   };
 
+  // Update recent searches
+  const updateRecentSearches = (city) => {
+    setRecentSearches((prevSearches) => {
+      const updatedSearches = [city, ...prevSearches.filter((c) => c !== city)];
+      return updatedSearches.slice(0, 5); // Keep only the last 5 searches
+    });
+  };
+
+  // Search from recent searches
+  const searchRecentCity = (city) => {
+    setInput(city);
+    searchWeather();
+  };
+
   // Add to favorites
   const addToFavorites = () => {
     if (weather.data && weather.data.name) {
       setFavorites((prevFavorites) => {
-        // Avoid duplicate entries
         if (prevFavorites.includes(weather.data.name)) return prevFavorites;
         return [...prevFavorites, weather.data.name];
       });
     }
-  };
-
-  const searchFavoriteCity = (city) => {
-    setInput(city);
-    searchWeather();
   };
 
   return (
@@ -65,6 +75,7 @@ function MyWeatherComponent() {
       <h1 className="app-name" style={{ color: "blue", marginBottom: "20px", fontSize: "50px" }}>
         Weather App
       </h1>
+
       <div className="search-bar">
         <input
           type="text"
@@ -79,24 +90,35 @@ function MyWeatherComponent() {
         </button>
       </div>
 
+      {/* Recent Searches */}
+      <div className="recent-searches" style={{ marginTop: "20px" }}>
+        <h3>Recent Searches:</h3>
+        <ul style={{ listStyleType: "none", padding: 0 }}>
+          {recentSearches.map((city, index) => (
+            <li key={index} style={{ marginBottom: "10px" }}>
+              <button
+                onClick={() => searchRecentCity(city)}
+                style={{ padding: "8px 12px", borderRadius: "5px", backgroundColor: "lightgray", border: "none" }}
+              >
+                {city}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {/* Loading spinner */}
       {weather.loading && (
-        <>
-          <br />
-		  <div style={{textAlign:"center", display: "flex", justifyContent: "center", alignItem: "center"}}>
+        <div style={{ textAlign: "center", display: "flex", justifyContent: "center", alignItems: "center" }}>
           <Oval type="Oval" color="black" height={100} width={100} />
-		  </div>
-        </>
+        </div>
       )}
 
       {/* Error message */}
       {weather.error && (
-        <>
-          <br />
-          <span className="error-message" style={{ fontSize: "30px", color: "red" }}>
-            City not found, please check the city name.
-          </span>
-        </>
+        <span className="error-message" style={{ fontSize: "30px", color: "red" }}>
+          City not found, please check the city name.
+        </span>
       )}
 
       {/* Weather details */}
@@ -109,16 +131,12 @@ function MyWeatherComponent() {
           </div>
 
           <div className="icon-temp">
-            <img
+            {/* <img
               src={`https://openweathermap.org/img/wn/${weather.data.weather[0].icon}@2x.png`}
               alt={weather.data.weather[0].description}
-            />
-            <div style={{ fontSize: "20px" }}>
-              {Math.round(weather.data.main.temp)}<sup className="deg">°C</sup>
-            </div>
-            <div style={{ fontSize: "20px" }}>
-              Humidity: {weather.data.main.humidity}%
-            </div>
+            /> */}
+            <div style={{ fontSize: "20px" }}>{Math.round(weather.data.main.temp)}°C</div>
+            <div style={{ fontSize: "20px" }}>Humidity: {weather.data.main.humidity}%</div>
           </div>
 
           <div className="des-wind" style={{ fontSize: "20px" }}>
@@ -147,7 +165,7 @@ function MyWeatherComponent() {
           {favorites.map((city, index) => (
             <li key={index} style={{ marginBottom: "10px" }}>
               <button
-                onClick={() => searchFavoriteCity(city)}
+                onClick={() => searchRecentCity(city)}
                 style={{ padding: "10px", borderRadius: "5px", backgroundColor: "lightblue", border: "none" }}
               >
                 {city}
