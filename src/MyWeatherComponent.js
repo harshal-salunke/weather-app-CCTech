@@ -10,6 +10,7 @@ function MyWeatherComponent() {
     data: {},
     error: false,
   });
+  const [favorites, setFavorites] = useState([]);
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp * 1000);
@@ -43,6 +44,22 @@ function MyWeatherComponent() {
     }
   };
 
+  // Add to favorites
+  const addToFavorites = () => {
+    if (weather.data && weather.data.name) {
+      setFavorites((prevFavorites) => {
+        // Avoid duplicate entries
+        if (prevFavorites.includes(weather.data.name)) return prevFavorites;
+        return [...prevFavorites, weather.data.name];
+      });
+    }
+  };
+
+  const searchFavoriteCity = (city) => {
+    setInput(city);
+    searchWeather();
+  };
+
   return (
     <div className="App">
       <h1 className="app-name" style={{ color: "blue", marginBottom: "20px", fontSize: "50px" }}>
@@ -62,24 +79,27 @@ function MyWeatherComponent() {
         </button>
       </div>
 
+      {/* Loading spinner */}
       {weather.loading && (
         <>
           <br />
-          <br />
+		  <div style={{textAlign:"center", display: "flex", justifyContent: "center", alignItem: "center"}}>
           <Oval type="Oval" color="black" height={100} width={100} />
+		  </div>
         </>
       )}
 
+      {/* Error message */}
       {weather.error && (
         <>
           <br />
-          <br />
-          <span className="error-message">
-            <span style={{ fontSize: "30px" }}>City not found, please check the city name</span>
+          <span className="error-message" style={{ fontSize: "30px", color: "red" }}>
+            City not found, please check the city name.
           </span>
         </>
       )}
 
+      {/* Weather details */}
       {weather.data && weather.data.main && (
         <div>
           <div className="city-name" style={{ fontSize: "20px", margin: "20px" }}>
@@ -110,8 +130,32 @@ function MyWeatherComponent() {
             <p>Sunrise: {formatTime(weather.data.sys.sunrise)}</p>
             <p>Sunset: {formatTime(weather.data.sys.sunset)}</p>
           </div>
+
+          <button
+            onClick={addToFavorites}
+            style={{ marginTop: "20px", padding: "10px 20px", backgroundColor: "green", color: "white", borderRadius: "10px", border: "none" }}
+          >
+            Add to Favorites
+          </button>
         </div>
       )}
+
+      {/* Favorites list */}
+      <div className="favorites-section" style={{ marginTop: "40px", padding: "20px", borderTop: "1px solid #ccc" }}>
+        <h2>Favorite Cities</h2>
+        <ul style={{ listStyleType: "none", padding: 0 }}>
+          {favorites.map((city, index) => (
+            <li key={index} style={{ marginBottom: "10px" }}>
+              <button
+                onClick={() => searchFavoriteCity(city)}
+                style={{ padding: "10px", borderRadius: "5px", backgroundColor: "lightblue", border: "none" }}
+              >
+                {city}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
